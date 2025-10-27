@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonara - Intelligent Audio Engineering Plugin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #000000, #0a1628, #001529);
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            background: radial-gradient(circle at 50% 50%, rgba(138, 255, 180, 0.05), transparent 50%);
+        }
+
+        .waveform {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.08;
+            pointer-events: none;
+        }
+
+        .logo {
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #8affb4 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            animation: glow 3s ease-in-out infinite;
+            letter-spacing: -2px;
+        }
+
+        @keyframes glow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.4); }
+        }
+
+        .tagline {
+            font-size: 1.5rem;
+            color: #94a3b8;
+            margin-bottom: 3rem;
+            max-width: 700px;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        .cta-primary {
+            background: linear-gradient(135deg, #10b981, #8affb4);
+            color: #000000;
+            border: none;
+            padding: 1.2rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(138, 255, 180, 0.4);
+            margin-bottom: 1rem;
+        }
+
+        .cta-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 50px rgba(138, 255, 180, 0.6);
+            background: linear-gradient(135deg, #8affb4, #10b981);
+        }
+
+        .beta-badge {
+            display: inline-block;
+            background: rgba(138, 255, 180, 0.1);
+            border: 2px solid #10b981;
+            color: #8affb4;
+            padding: 0.5rem 1.5rem;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            background: linear-gradient(135deg, #8affb4, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 1.2rem;
+            margin-bottom: 4rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .problem-box {
+            background: linear-gradient(135deg, rgba(10, 22, 40, 0.8), rgba(0, 21, 41, 0.8));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(138, 255, 180, 0.2);
+            border-radius: 20px;
+            padding: 3rem;
+            margin-bottom: 3rem;
+            transition: all 0.3s ease;
+        }
+
+        .problem-box:hover {
+            border-color: #10b981;
+            box-shadow: 0 10px 40px rgba(138, 255, 180, 0.15);
+        }
+
+        .problem-box h3 {
+            color: #8affb4;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .problem-box p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #cbd5e1;
+        }
+
+        .solution-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .solution-card {
+            background: linear-gradient(135deg, rgba(10, 22, 40, 0.6), rgba(0, 21, 41, 0.6));
+            border: 2px solid rgba(167, 139, 250, 0.3);
+            border-radius: 20px;
+            padding: 2.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .solution-card:hover {
+            transform: translateY(-10px);
+            border-color: #a78bfa;
+            box-shadow: 0 20px 40px rgba(167, 139, 250, 0.3);
+        }
+
+        .solution-card h4 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #a78bfa;
+        }
+
+        .solution-card p {
+            color: #cbd5e1;
+            line-height: 1.7;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2.5rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, rgba(10, 22, 40, 0.8), rgba(0, 21, 41, 0.8));
+            border-radius: 20px;
+            padding: 2.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .feature-card:hover {
+            border-color: #10b981;
+            transform: scale(1.05);
+            box-shadow: 0 10px 40px rgba(138, 255, 180, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .feature-card:nth-child(2) .feature-icon {
+            animation-delay: 0.5s;
+        }
+
+        .feature-card:nth-child(3) .feature-icon {
+            animation-delay: 1s;
+        }
+
+        .feature-card h4 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            color: #8affb4;
+        }
+
+        .feature-card p {
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+
+        .audience-section {
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(16, 185, 129, 0.1));
+            border-radius: 30px;
+            padding: 4rem;
+            border: 1px solid rgba(138, 255, 180, 0.2);
+        }
+
+        .audience-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .audience-card {
+            background: rgba(10, 22, 40, 0.6);
+            border-left: 4px solid #10b981;
+            padding: 2rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .audience-card:hover {
+            background: rgba(10, 22, 40, 0.8);
+            transform: translateX(10px);
+        }
+
+        .audience-card h4 {
+            font-size: 1.3rem;
+            margin-bottom: 0.8rem;
+            color: #8affb4;
+        }
+
+        .audience-card ul {
+            list-style: none;
+            color: #cbd5e1;
+        }
+
+        .audience-card li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .audience-card li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .cta-section {
+            text-align: center;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(167, 139, 250, 0.15));
+            border-radius: 30px;
+            padding: 5rem 2rem;
+            border: 2px solid rgba(138, 255, 180, 0.3);
+        }
+
+        .cta-section h2 {
+            font-size: 2.8rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #8affb4, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .cta-section p {
+            font-size: 1.3rem;
+            color: #cbd5e1;
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .email-input {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .email-input input {
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            border: 2px solid rgba(138, 255, 180, 0.5);
+            background: rgba(10, 22, 40, 0.8);
+            color: white;
+            border-radius: 50px;
+            min-width: 300px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .email-input input:focus {
+            border-color: #10b981;
+            background: rgba(10, 22, 40, 1);
+            box-shadow: 0 0 20px rgba(138, 255, 180, 0.3);
+        }
+
+        .email-input input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .demo-visual {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(10, 22, 40, 0.6));
+            border: 2px solid rgba(138, 255, 180, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 3rem 0;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .demo-visual:hover {
+            border-color: #10b981;
+            box-shadow: 0 10px 40px rgba(138, 255, 180, 0.2);
+        }
+
+        .demo-prompt {
+            color: #8affb4;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .demo-response {
+            color: #a78bfa;
+            line-height: 1.8;
+        }
+
+        .accent-text {
+            color: #8affb4;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <canvas class="waveform" id="waveform"></canvas>
+        <h1 class="logo">Sonara</h1>
+        <p class="tagline">Your intelligent assistant that turns words into professional sound—and teaches you audio engineering as you create</p>
+        <button class="cta-primary" onclick="scrollToCTA()">Join the Waitlist</button>
+        <span class="beta-badge">Early Access Beta</span>
+    </div>
+
+    <section id="problem">
+        <h2 class="section-title">The Learning Curve Shouldn't Kill Your Creativity</h2>
+        <p class="section-subtitle">Every musician faces the same frustrating barrier</p>
+        
+        <div class="problem-box">
+            <h3>🎵 You have the melody in your head, but...</h3>
+            <p>You open your DAW and face a wall of knobs, sliders, and technical jargon. EQ curves. Compression ratios. Reverb decay times. What should be a creative flow becomes a technical obstacle course. You either spend months watching tutorials or settle for mediocre sound quality.</p>
+        </div>
+
+        <div class="problem-box">
+            <h3>📚 The current options aren't working</h3>
+            <p>YouTube tutorials take forever and you forget everything by the time you need it. Preset packs give you sounds you didn't ask for. And other tools? They either overwhelm you with complexity or take control away entirely, making you feel like a passenger in your own creative process.</p>
+        </div>
+    </section>
+
+    <section id="solution">
+        <h2 class="section-title">Speak Your Sound Into Existence</h2>
+        <p class="section-subtitle">Sonara is a DAW plugin that understands what you want and shows you how to achieve it—empowering creativity, never replacing it</p>
+
+        <div class="demo-visual">
+            <div class="demo-prompt">You: "Make my vocals sound airy and spacious"</div>
+            <div class="demo-response">
+                ✨ Sonara: Done! Here's what I did:<br>
+                • Boosted high frequencies around 10kHz for airiness<br>
+                • Added hall reverb with 2.3s decay for space<br>
+                • Widened stereo field to 130% for presence<br>
+                <br>
+                💡 Learn: High-shelf boost adds "air," while hall reverb creates depth without muddiness.
+            </div>
+        </div>
+
+        <div class="solution-grid">
+            <div class="solution-card">
+                <h4>🎯 Instant Results</h4>
+                <p>Type what you want in plain English. Get professional-grade processing applied to your audio in seconds. No knob-turning, no guesswork.</p>
+            </div>
+            <div class="solution-card">
+                <h4>🧠 Learning Built-In</h4>
+                <p>Every change comes with a simple explanation. Understand the "why" behind the settings so you're not just getting results—you're becoming a better producer.</p>
+            </div>
+            <div class="solution-card">
+                <h4>🎨 You Stay In Control</h4>
+                <p>This isn't automation replacing your creativity. It's an intelligent tool that helps you realize your vision faster while teaching you the craft.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="features">
+        <h2 class="section-title">Everything You Need to Learn and Create</h2>
+        
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">💬</div>
+                <h4>Natural Language Processing</h4>
+                <p>Describe your desired sound in plain English. "Punchy", "warm", "spacious"—Sonara understands creative language, not just technical terms.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h4>Real-Time Audio Processing</h4>
+                <p>Watch your sound transform instantly. All processing happens in your DAW with full parameter visibility—no black boxes, just transparent audio engineering.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📖</div>
+                <h4>Educational Insights</h4>
+                <p>Each adjustment includes bite-sized explanations of what changed and why. Build your audio engineering knowledge organically as you work on real projects.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="audience">
+        <div class="audience-section">
+            <h2 class="section-title">Built For Modern Creators</h2>
+            <p class="section-subtitle">Whether you're just starting out or looking to speed up your workflow</p>
+            
+            <div class="audience-grid">
+                <div class="audience-card">
+                    <h4>Bedroom Producers</h4>
+                    <ul>
+                        <li>Ages 16-30</li>
+                        <li>Making beats in their free time</li>
+                        <li>Frustrated by technical barriers</li>
+                        <li>Want professional sound without years of study</li>
+                    </ul>
+                </div>
+                <div class="audience-card">
+                    <h4>Singer-Songwriters</h4>
+                    <ul>
+                        <li>Focus on composition and performance</li>
+                        <li>Need decent mixing for demos</li>
+                        <li>Don't have time for deep technical learning</li>
+                        <li>Want to self-produce on a budget</li>
+                    </ul>
+                </div>
+                <div class="audience-card">
+                    <h4>Content Creators</h4>
+                    <ul>
+                        <li>Podcasters and YouTubers</li>
+                        <li>Need consistent audio quality</li>
+                        <li>Want to learn as they grow</li>
+                        <li>Value speed and simplicity</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="cta">
+        <div class="cta-section">
+            <h2>Start Creating With Confidence</h2>
+            <p>Join hundreds of producers getting early access to Sonara. Be among the first to experience audio engineering that teaches as it transforms.</p>
+            <div class="email-input">
+                <input type="email" placeholder="Enter your email" id="emailInput">
+                <button class="cta-primary" onclick="handleSignup()">Get Early Access</button>
+            </div>
+            <p style="font-size: 0.9rem; margin-top: 2rem; color: #94a3b8;">⚡ Limited beta spots available • Compatible with all major DAWs</p>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 Sonara. Empowering creators, not replacing them.</p>
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('waveform');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        function drawWaveform() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+            gradient.addColorStop(0, 'rgba(138, 255, 180, 0.3)');
+            gradient.addColorStop(0.5, 'rgba(167, 139, 250, 0.3)');
+            gradient.addColorStop(1, 'rgba(138, 255, 180, 0.3)');
+            
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 2;
+            
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                for (let x = 0; x < canvas.width; x++) {
+                    const y = canvas.height / 2 + Math.sin(x * 0.02 + Date.now() * 0.001 + i) * (30 + i * 10);
+                    if (x === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+            }
+            
+            requestAnimationFrame(drawWaveform);
+        }
+        
+        drawWaveform();
+        
+        function scrollToCTA() {
+            document.getElementById('cta').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function handleSignup() {
+            const email = document.getElementById('emailInput').value;
+            if (email && email.includes('@')) {
+                alert('🎉 Thanks for joining! We\'ll send beta access details to ' + email);
+                document.getElementById('emailInput').value = '';
+            } else {
+                alert('Please enter a valid email address');
+            }
+        }
+    </script>
+</body>
+</html>
