@@ -109,3 +109,32 @@ A task is **Done** when:
 ---
 
 **Last updated:** [2025-08-27] — propose changes via PR to this file.
+
+---
+
+## Sonara-Specific Guidelines
+
+### Adding New Keywords
+
+To add new keyword mappings for the audio plugin:
+
+1. Open `Source/KeywordMapper.cpp`
+2. Add keywords to the appropriate list in the constructor
+3. Add processing logic in the relevant function (e.g., `processBrightnessKeywords()`)
+
+Example:
+```cpp
+// In processBrightnessKeywords()
+if (text.contains("your-keyword")) {
+    params.eq.highShelfFreq = 10000.0f;
+    params.eq.highShelfGain = 2.0f;
+    addChange("High Shelf 10kHz +2.0dB", juce::Colour(0xff8affb4));
+}
+```
+
+### Testing the Audio Plugin
+
+- Build the plugin using `./build.sh`
+- Test in Logic Pro X or your preferred DAW
+- Verify audio processing with various keyword inputs
+- Check that the changes log displays correctly
