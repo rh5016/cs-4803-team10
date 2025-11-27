@@ -5,8 +5,10 @@ ReverbProcessor::ReverbProcessor() {
 }
 
 void ReverbProcessor::setSampleRate(double sampleRate) {
-    juce::ignoreUnused(sampleRate);
-    // Reverb sample rate is set automatically by JUCE's DSP module
+    spec.sampleRate = sampleRate;
+    spec.maximumBlockSize = 512;
+    spec.numChannels = 2;
+    isPrepared = false;
 }
 
 void ReverbProcessor::reset() {
@@ -46,10 +48,28 @@ void ReverbProcessor::setEnabled(bool en) {
 void ReverbProcessor::processBlock(juce::AudioBuffer<float>& buffer) {
     if (!enabled) return;
     
+    juce::dsp::ProcessSpec processSpec;
+    processSpec.sampleRate = spec.sampleRate > 0 ? spec.sampleRate : 44100.0;
+    processSpec.maximumBlockSize = (juce::uint32)buffer.getNumSamples();
+    processSpec.numChannels = (juce::uint32)buffer.getNumChannels();
+    
+    prepareIfNeeded(processSpec);
+    
     juce::dsp::AudioBlock<float> block(buffer);
     juce::dsp::ProcessContextReplacing<float> context(block);
     
     reverb.process(context);
+}
+
+void ReverbProcessor::prepareIfNeeded(const juce::dsp::ProcessSpec& processSpec) {
+    if (!isPrepared || spec.sampleRate != processSpec.sampleRate || 
+        spec.maximumBlockSize != processSpec.maximumBlockSize || 
+        spec.numChannels != processSpec.numChannels) {
+        spec = processSpec;
+        reverb.prepare(spec);
+        isPrepared = true;
+        updateReverbSettings();
+    }
 }
 
 void ReverbProcessor::updateReverbSettings() {

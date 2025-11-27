@@ -1,6 +1,10 @@
 #include "KeywordMapper.h"
+#include "GeminiClient.h"
 
 KeywordMapper::KeywordMapper() {
+    // Gemini client will be created when API key is set
+    geminiClient = nullptr;
+    
     // Initialize keyword lists
     brightnessKeywords = {
         "bright", "brighter", "brightness", "sparkle", "sparkly", "air", "airy", "airiness",
@@ -56,13 +60,19 @@ AudioParameters KeywordMapper::processText(const juce::String& text, float baseI
     processBassKeywords(lowerText, params);
     processPresenceKeywords(lowerText, params);
     
-    // Apply intensity to all parameters
-    params.eq.highShelfGain *= intensity;
-    params.eq.midGain *= intensity;
-    params.eq.lowShelfGain *= intensity;
-    params.reverb.wetLevel *= intensity;
-    params.reverb.roomSize *= intensity;
-    params.compressor.ratio *= intensity;
+    // Apply intensity to all parameters (only if intensity is positive)
+    // For negative values (like reductions), we still want them to work
+    if (intensity > 0) {
+        params.eq.highShelfGain *= intensity;
+        params.eq.midGain *= intensity;
+        params.eq.lowShelfGain *= intensity;
+        params.reverb.wetLevel *= intensity;
+        params.reverb.roomSize *= intensity;
+        
+        // Compressor ratio shouldn't go below 1.0
+        float newRatio = params.compressor.ratio * intensity;
+        params.compressor.ratio = (newRatio < 1.0f) ? params.compressor.ratio : newRatio;
+    }
     
     return params;
 }
@@ -85,33 +95,47 @@ float KeywordMapper::extractIntensity(const juce::String& text) {
 }
 
 void KeywordMapper::processBrightnessKeywords(const juce::String& text, AudioParameters& params) {
-    if (containsKeyword(text, brightnessKeywords)) {
+    // Check for dark/dull first (reduction)
+    if (text.contains("dull") || text.contains("dark") || text.contains("muddy")) {
+        params.eq.highShelfFreq = 8000.0f;
+        params.eq.highShelfGain = -3.0f;
+        addChange("High Shelf 8kHz -3.0dB", juce::Colour(0xff8affb4));
+    }
+    // Then check for brightness boosts
+    else if (containsKeyword(text, brightnessKeywords)) {
         if (text.contains("more air") || text.contains("airy") || text.contains("airiness")) {
             params.eq.highShelfFreq = 10000.0f;
             params.eq.highShelfGain = 4.0f;
             addChange("High Shelf 10kHz +4.0dB", juce::Colour(0xff8affb4));
-        } else if (text.contains("sparkle") || text.contains("sparkly")) {
+        } 
+        else if (text.contains("sparkle") || text.contains("sparkly") || text.contains("shine") || text.contains("shiny")) {
             params.eq.highShelfFreq = 12000.0f;
             params.eq.highShelfGain = 3.0f;
             addChange("High Shelf 12kHz +3.0dB", juce::Colour(0xff8affb4));
-        } else if (text.contains("bright") || text.contains("brightness")) {
+        } 
+        else if (text.contains("crisp") || text.contains("crispy") || text.contains("highs") || text.contains("treble")) {
+            params.eq.highShelfFreq = 9000.0f;
+            params.eq.highShelfGain = 3.0f;
+            addChange("High Shelf 9kHz +3.0dB", juce::Colour(0xff8affb4));
+        }
+        else {
+            // Default brightness boost
             params.eq.highShelfFreq = 8000.0f;
             params.eq.highShelfGain = 2.5f;
             addChange("High Shelf 8kHz +2.5dB", juce::Colour(0xff8affb4));
         }
         
-        if (text.contains("clarity") || text.contains("clear")) {
-            params.eq.midFreq = 2500.0f;
-            params.eq.midGain = 2.0f;
-            params.eq.midQ = 1.5f;
-            addChange("Peak 2.5kHz +2.0dB Q:1.5", juce::Colour(0xff8affb4));
+        // Clarity can be applied in addition to brightness
+        if (text.contains("clarity") || text.contains("clear") || text.contains("clearer") || 
+            text.contains("detail") || text.contains("detailed")) {
+            // Only apply clarity mid boost if presence hasn't already set a higher mid freq
+            if (params.eq.midFreq < 2000.0f || params.eq.midFreq == 2000.0f) {
+                params.eq.midFreq = 2500.0f;
+                params.eq.midGain = 2.0f;
+                params.eq.midQ = 1.5f;
+                addChange("Peak 2.5kHz +2.0dB Q:1.5", juce::Colour(0xff8affb4));
+            }
         }
-    }
-    
-    if (text.contains("dull") || text.contains("dark")) {
-        params.eq.highShelfFreq = 8000.0f;
-        params.eq.highShelfGain = -3.0f;
-        addChange("High Shelf 8kHz -3.0dB", juce::Colour(0xff8affb4));
     }
 }
 
@@ -180,21 +204,25 @@ void KeywordMapper::processCompressorKeywords(const juce::String& text, AudioPar
     if (containsKeyword(text, compressorKeywords)) {
         params.compressor.enabled = true;
         
-        if (text.contains("punch") || text.contains("punchy")) {
+        // Check for punch - but only if it's not in the context of bass (bass punch = different meaning)
+        if ((text.contains("punch") || text.contains("punchy")) && !text.contains("bass") && !text.contains("kick")) {
             params.compressor.threshold = -12.0f;
             params.compressor.ratio = 4.0f;
             params.compressor.attack = 3.0f;
             params.compressor.release = 60.0f;
             params.compressor.makeupGain = 2.0f;
             addChange("Compressor: Ratio 4:1, Attack 3ms, Release 60ms, +2dB makeup", juce::Colour(0xffff6b35));
-        } else if (text.contains("glue") || text.contains("tight")) {
+        } 
+        else if (text.contains("glue") || text.contains("tight") || text.contains("tighter")) {
             params.compressor.threshold = -8.0f;
             params.compressor.ratio = 2.5f;
             params.compressor.attack = 10.0f;
             params.compressor.release = 100.0f;
             params.compressor.makeupGain = 1.0f;
             addChange("Compressor: Ratio 2.5:1, Attack 10ms, Release 100ms", juce::Colour(0xffff6b35));
-        } else if (text.contains("level") || text.contains("even")) {
+        } 
+        else if (text.contains("level") || text.contains("leveled") || text.contains("even") || 
+                 text.contains("consistent") || text.contains("control") || text.contains("controlled")) {
             params.compressor.threshold = -10.0f;
             params.compressor.ratio = 3.0f;
             params.compressor.attack = 20.0f;
@@ -202,38 +230,71 @@ void KeywordMapper::processCompressorKeywords(const juce::String& text, AudioPar
             params.compressor.makeupGain = 1.5f;
             addChange("Compressor: Ratio 3:1, Attack 20ms, Release 150ms", juce::Colour(0xffff6b35));
         }
+        else {
+            // Default compression if keyword is present but no specific type matched
+            params.compressor.threshold = -10.0f;
+            params.compressor.ratio = 3.0f;
+            params.compressor.attack = 15.0f;
+            params.compressor.release = 100.0f;
+            params.compressor.makeupGain = 1.0f;
+            addChange("Compressor: Ratio 3:1 (default)", juce::Colour(0xffff6b35));
+        }
     }
 }
 
 void KeywordMapper::processBassKeywords(const juce::String& text, AudioParameters& params) {
-    if (containsKeyword(text, bassKeywords)) {
-        if (text.contains("more bass") || text.contains("low end") || text.contains("lows")) {
-            params.eq.lowShelfFreq = 100.0f;
-            params.eq.lowShelfGain = 4.0f;
-            addChange("Low Shelf 100Hz +4.0dB", juce::Colour(0xff4fc3f7));
-        }
-        
-        if (text.contains("deeper") || text.contains("deep")) {
-            params.eq.lowShelfFreq = 60.0f;
-            params.eq.lowShelfGain = 3.0f;
-            addChange("Low Shelf 60Hz +3.0dB", juce::Colour(0xff4fc3f7));
-        }
-        
-        if (text.contains("boom") || text.contains("boomy")) {
-            params.eq.lowShelfFreq = 150.0f;
-            params.eq.lowShelfGain = -3.0f;
-            addChange("Low Shelf 150Hz -3.0dB", juce::Colour(0xff4fc3f7));
-        }
+    bool bassApplied = false;
+    
+    // Check for specific bass reduction keywords first
+    if (text.contains("boom") || text.contains("boomy") || text.contains("reduce bass") || text.contains("less bass")) {
+        params.eq.lowShelfFreq = 150.0f;
+        params.eq.lowShelfGain = -3.0f;
+        addChange("Low Shelf 150Hz -3.0dB", juce::Colour(0xff4fc3f7));
+        bassApplied = true;
+    }
+    // Check for deep bass keywords
+    else if (text.contains("deeper") || text.contains("deep bass") || text.contains("sub")) {
+        params.eq.lowShelfFreq = 60.0f;
+        params.eq.lowShelfGain = 3.0f;
+        addChange("Low Shelf 60Hz +3.0dB", juce::Colour(0xff4fc3f7));
+        bassApplied = true;
+    }
+    // General bass boost
+    else if (containsKeyword(text, bassKeywords)) {
+        params.eq.lowShelfFreq = 100.0f;
+        params.eq.lowShelfGain = 4.0f;
+        addChange("Low Shelf 100Hz +4.0dB", juce::Colour(0xff4fc3f7));
+        bassApplied = true;
     }
 }
 
 void KeywordMapper::processPresenceKeywords(const juce::String& text, AudioParameters& params) {
     if (containsKeyword(text, presenceKeywords)) {
-        if (text.contains("presence") || text.contains("forward") || text.contains("vocal")) {
+        // Only apply presence if mid frequency hasn't been set by warmth keywords
+        // (warmth uses lower frequencies, presence uses higher)
+        if (params.eq.midFreq < 2000.0f) {
+            // Warmth was already applied, don't override
+            return;
+        }
+        
+        if (text.contains("snap") || text.contains("snappy")) {
+            params.eq.midFreq = 4000.0f;
+            params.eq.midGain = 2.5f;
+            params.eq.midQ = 2.5f;
+            addChange("Peak 4kHz +2.5dB Q:2.5", juce::Colour(0xffffb74d));
+        }
+        else if (text.contains("presence") || text.contains("forward") || text.contains("vocal") || 
+                 text.contains("upfront") || text.contains("cut") || text.contains("cut through")) {
             params.eq.midFreq = 3000.0f;
             params.eq.midGain = 3.0f;
             params.eq.midQ = 2.0f;
             addChange("Peak 3kHz +3.0dB Q:2.0", juce::Colour(0xffffb74d));
+        }
+        else if (text.contains("mid") || text.contains("mids") || text.contains("midrange")) {
+            params.eq.midFreq = 2500.0f;
+            params.eq.midGain = 2.0f;
+            params.eq.midQ = 1.5f;
+            addChange("Peak 2.5kHz +2.0dB Q:1.5", juce::Colour(0xffffb74d));
         }
     }
 }
@@ -244,6 +305,62 @@ void KeywordMapper::addChange(const juce::String& description, const juce::Colou
 
 std::vector<ChangeLog> KeywordMapper::getRecentChanges() const {
     return recentChanges;
+}
+
+KeywordMapper::~KeywordMapper() {
+    geminiClient = nullptr; // Will be destroyed automatically via unique_ptr
+}
+
+void KeywordMapper::setGeminiApiKey(const juce::String& apiKey) {
+    if (apiKey.trim().isNotEmpty()) {
+        if (!geminiClient) {
+            geminiClient = std::make_unique<GeminiClient>();
+        }
+        geminiClient->setApiKey(apiKey);
+    } else {
+        geminiClient = nullptr;
+    }
+}
+
+bool KeywordMapper::isGeminiEnabled() const {
+    return geminiClient != nullptr && geminiClient->isApiKeySet();
+}
+
+void KeywordMapper::processTextWithGemini(const juce::String& text, 
+                                           float baseIntensity,
+                                           std::function<void(const AudioParameters&)> callback) {
+    // Capture text by value for the lambda
+    juce::String textCopy = text;
+    
+    // If Gemini is not enabled, fall back to direct processing
+    if (!isGeminiEnabled()) {
+        AudioParameters params = processText(textCopy, baseIntensity);
+        if (callback) {
+            callback(params);
+        }
+        return;
+    }
+    
+    // Use Gemini to pre-process the text
+    geminiClient->processTextAsync(textCopy, [this, textCopy, baseIntensity, callback](bool success, const juce::String& processedText, const juce::String& error) {
+        if (success && processedText.isNotEmpty()) {
+            // Process the Gemini-enhanced text through keyword mapper
+            AudioParameters params = processText(processedText, baseIntensity);
+            if (callback) {
+                callback(params);
+            }
+        } else {
+            // Gemini failed, fall back to direct keyword processing
+            // Log the error for debugging
+            if (error.isNotEmpty()) {
+                addChange("LLM processing failed, using direct keyword mapping", juce::Colours::orange);
+            }
+            AudioParameters params = processText(textCopy, baseIntensity);
+            if (callback) {
+                callback(params);
+            }
+        }
+    });
 }
 
 void KeywordMapper::reset() {

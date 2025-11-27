@@ -5,6 +5,10 @@
 #include "ChangesLogger.h"
 #include <map>
 #include <vector>
+#include <memory>
+
+// Forward declaration
+class GeminiClient;
 
 struct AudioParameters {
     // EQ Parameters
@@ -45,9 +49,24 @@ struct AudioParameters {
 class KeywordMapper {
 public:
     KeywordMapper();
+    ~KeywordMapper();
     
     // Process text input and return audio parameters
     AudioParameters processText(const juce::String& text, float baseIntensity = 1.0f);
+    
+    // Process text with Gemini LLM enhancement (async)
+    // If Gemini is configured, it will pre-process the text before keyword mapping
+    // If Gemini fails or isn't configured, falls back to direct keyword mapping
+    void processTextWithGemini(const juce::String& text, 
+                                float baseIntensity,
+                                std::function<void(const AudioParameters&)> callback);
+    
+    // Set Gemini API key to enable LLM processing
+    // Get your free API key from: https://aistudio.google.com/api-keys
+    void setGeminiApiKey(const juce::String& apiKey);
+    
+    // Check if Gemini is enabled
+    bool isGeminiEnabled() const;
     
     // Get list of changes that were applied
     std::vector<ChangeLog> getRecentChanges() const;
@@ -57,6 +76,9 @@ public:
     
 private:
     std::vector<ChangeLog> recentChanges;
+    
+    // Gemini client for LLM processing (optional)
+    std::unique_ptr<GeminiClient> geminiClient;
     
     // Keyword detection functions
     bool containsKeyword(const juce::String& text, const std::vector<juce::String>& keywords);

@@ -30,6 +30,10 @@ private:
     float dryLevel = 1.0f;
     bool enabled = false;
     
+    juce::dsp::ProcessSpec spec;
+    bool isPrepared = false;
+    
     void updateReverbSettings();
+    void prepareIfNeeded(const juce::dsp::ProcessSpec& processSpec);
 };
 

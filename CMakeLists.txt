@@ -32,6 +32,8 @@ target_sources(Sonara PRIVATE
     Source/KeywordMapper.cpp
     Source/ChangesLogger.h
     Source/ChangesLogger.cpp
+    Source/GeminiClient.h
+    Source/GeminiClient.cpp
 )
 
 target_compile_definitions(Sonara PRIVATE

@@ -112,9 +112,23 @@ void SonaraAudioProcessorEditor::textEditorReturnKeyPressed(juce::TextEditor& ed
         if (text.trim().isNotEmpty())
         {
             float intensity = (float)intensitySlider.getValue();
-            audioProcessor.processTextInput(text);
             audioProcessor.setIntensity(intensity);
-            updateChangesDisplay();
+            
+            // Use Gemini if enabled, otherwise fall back to direct processing
+            if (audioProcessor.isGeminiEnabled())
+            {
+                audioProcessor.processTextInputWithGemini(text, [this]() {
+                    // Update UI when processing completes (ensure we're on message thread)
+                    juce::MessageManager::callAsync([this]() {
+                        updateChangesDisplay();
+                    });
+                });
+            }
+            else
+            {
+                audioProcessor.processTextInput(text);
+                updateChangesDisplay();
+            }
         }
     }
 }
@@ -126,9 +140,24 @@ void SonaraAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
         juce::String currentText = textInput.getText();
         if (currentText.trim().isNotEmpty())
         {
-            audioProcessor.processTextInput(currentText);
-            audioProcessor.setIntensity((float)intensitySlider.getValue());
-            updateChangesDisplay();
+            float intensity = (float)intensitySlider.getValue();
+            audioProcessor.setIntensity(intensity);
+            
+            // Use Gemini if enabled, otherwise fall back to direct processing
+            if (audioProcessor.isGeminiEnabled())
+            {
+                audioProcessor.processTextInputWithGemini(currentText, [this]() {
+                    // Ensure UI update happens on message thread
+                    juce::MessageManager::callAsync([this]() {
+                        updateChangesDisplay();
+                    });
+                });
+            }
+            else
+            {
+                audioProcessor.processTextInput(currentText);
+                updateChangesDisplay();
+            }
         }
     }
 }

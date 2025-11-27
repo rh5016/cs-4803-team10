@@ -13,6 +13,9 @@ SonaraAudioProcessor::SonaraAudioProcessor()
                        )
 #endif
 {
+    // Set your Gemini API key here
+    // Get your free API key from: https://aistudio.google.com/api-keys
+    setGeminiApiKey("AIzaSyAfQd48-sPRWVnDNPwmj1yRJH_klDpIei4");
 }
 
 SonaraAudioProcessor::~SonaraAudioProcessor()
@@ -162,36 +165,31 @@ void SonaraAudioProcessor::processTextInput(const juce::String& text)
     // Process text and apply parameters
     AudioParameters params = keywordMapper.processText(text, currentIntensity);
     
-    // Apply EQ settings
-    if (params.eq.highShelfGain != 0.0f) {
-        equalizer.setHighShelf(params.eq.highShelfFreq, params.eq.highShelfGain);
-    }
-    if (params.eq.midGain != 0.0f) {
-        equalizer.setMidPeak(params.eq.midFreq, params.eq.midGain, params.eq.midQ);
-    }
-    if (params.eq.lowShelfGain != 0.0f) {
-        equalizer.setLowShelf(params.eq.lowShelfFreq, params.eq.lowShelfGain);
-    }
+    // Reset EQ to flat response first
+    equalizer.setHighShelf(10000.0f, 0.0f);
+    equalizer.setMidPeak(2000.0f, 0.0f, 1.0f);
+    equalizer.setLowShelf(100.0f, 0.0f);
+    
+    // Apply EQ settings (always apply, even if 0, to ensure proper reset)
+    equalizer.setHighShelf(params.eq.highShelfFreq, params.eq.highShelfGain);
+    equalizer.setMidPeak(params.eq.midFreq, params.eq.midGain, params.eq.midQ);
+    equalizer.setLowShelf(params.eq.lowShelfFreq, params.eq.lowShelfGain);
     
     // Apply compressor settings
-    if (params.compressor.enabled) {
-        compressor.setThreshold(params.compressor.threshold);
-        compressor.setRatio(params.compressor.ratio);
-        compressor.setAttack(params.compressor.attack);
-        compressor.setRelease(params.compressor.release);
-        compressor.setMakeupGain(params.compressor.makeupGain);
-        compressor.setEnabled(true);
-    }
+    compressor.setThreshold(params.compressor.threshold);
+    compressor.setRatio(params.compressor.ratio);
+    compressor.setAttack(params.compressor.attack);
+    compressor.setRelease(params.compressor.release);
+    compressor.setMakeupGain(params.compressor.makeupGain);
+    compressor.setEnabled(params.compressor.enabled);
     
     // Apply reverb settings
-    if (params.reverb.enabled) {
-        reverbProcessor.setRoomSize(params.reverb.roomSize);
-        reverbProcessor.setDamping(params.reverb.damping);
-        reverbProcessor.setWidth(params.reverb.width);
-        reverbProcessor.setWetLevel(params.reverb.wetLevel);
-        reverbProcessor.setDryLevel(params.reverb.dryLevel);
-        reverbProcessor.setEnabled(true);
-    }
+    reverbProcessor.setRoomSize(params.reverb.roomSize);
+    reverbProcessor.setDamping(params.reverb.damping);
+    reverbProcessor.setWidth(params.reverb.width);
+    reverbProcessor.setWetLevel(params.reverb.wetLevel);
+    reverbProcessor.setDryLevel(params.reverb.dryLevel);
+    reverbProcessor.setEnabled(params.reverb.enabled);
 }
 
 void SonaraAudioProcessor::setIntensity(float intensity)
@@ -202,6 +200,53 @@ void SonaraAudioProcessor::setIntensity(float intensity)
 std::vector<ChangeLog> SonaraAudioProcessor::getChangeLog() const
 {
     return keywordMapper.getRecentChanges();
+}
+
+void SonaraAudioProcessor::setGeminiApiKey(const juce::String& apiKey)
+{
+    keywordMapper.setGeminiApiKey(apiKey);
+}
+
+bool SonaraAudioProcessor::isGeminiEnabled() const
+{
+    return keywordMapper.isGeminiEnabled();
+}
+
+void SonaraAudioProcessor::processTextInputWithGemini(const juce::String& text, std::function<void()> onComplete)
+{
+    keywordMapper.processTextWithGemini(text, currentIntensity, [this, onComplete](const AudioParameters& params) {
+        // Apply the parameters (same logic as processTextInput)
+        // Reset EQ to flat response first
+        equalizer.setHighShelf(10000.0f, 0.0f);
+        equalizer.setMidPeak(2000.0f, 0.0f, 1.0f);
+        equalizer.setLowShelf(100.0f, 0.0f);
+        
+        // Apply EQ settings
+        equalizer.setHighShelf(params.eq.highShelfFreq, params.eq.highShelfGain);
+        equalizer.setMidPeak(params.eq.midFreq, params.eq.midGain, params.eq.midQ);
+        equalizer.setLowShelf(params.eq.lowShelfFreq, params.eq.lowShelfGain);
+        
+        // Apply compressor settings
+        compressor.setThreshold(params.compressor.threshold);
+        compressor.setRatio(params.compressor.ratio);
+        compressor.setAttack(params.compressor.attack);
+        compressor.setRelease(params.compressor.release);
+        compressor.setMakeupGain(params.compressor.makeupGain);
+        compressor.setEnabled(params.compressor.enabled);
+        
+        // Apply reverb settings
+        reverbProcessor.setRoomSize(params.reverb.roomSize);
+        reverbProcessor.setDamping(params.reverb.damping);
+        reverbProcessor.setWidth(params.reverb.width);
+        reverbProcessor.setWetLevel(params.reverb.wetLevel);
+        reverbProcessor.setDryLevel(params.reverb.dryLevel);
+        reverbProcessor.setEnabled(params.reverb.enabled);
+        
+        // Call completion callback if provided
+        if (onComplete) {
+            onComplete();
+        }
+    });
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()

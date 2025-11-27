@@ -28,8 +28,10 @@ private:
     juce::dsp::IIR::Coefficients<float>::Ptr midPeakCoeffs;
     juce::dsp::IIR::Coefficients<float>::Ptr lowShelfCoeffs;
     
-    double currentSampleRate = 44100.0;
+    juce::dsp::ProcessSpec spec;
+    bool isPrepared = false;
     
     void updateFilters();
+    void prepareIfNeeded(const juce::dsp::ProcessSpec& processSpec);
 };
 

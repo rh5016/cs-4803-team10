@@ -6,6 +6,7 @@
 #include "AudioProcessing/ReverbProcessor.h"
 #include "KeywordMapper.h"
 #include "ChangesLogger.h"
+#include <functional>
 
 class SonaraAudioProcessor : public juce::AudioProcessor
 {
@@ -45,6 +46,11 @@ public:
     void processTextInput(const juce::String& text);
     void setIntensity(float intensity);
     std::vector<ChangeLog> getChangeLog() const;
+    
+    // Gemini LLM integration
+    void setGeminiApiKey(const juce::String& apiKey);
+    bool isGeminiEnabled() const;
+    void processTextInputWithGemini(const juce::String& text, std::function<void()> onComplete = nullptr);
     
 private:
     Equalizer equalizer;
