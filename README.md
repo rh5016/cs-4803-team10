@@ -8,7 +8,7 @@ Intelligent audio engineering plugin that transforms your sound based on text in
 - **Intelligent keyword mapping**: Understands creative language and applies appropriate processing
 - **Real-time feedback**: See exactly what changes were made to your audio
 - **Professional audio processing**: Built-in EQ, compression, and reverb
-- **DAW compatible**: Works with Logic Pro X, Pro Tools, Ableton, and more
+- **DAW compatible**: Works with Logic Pro X, Ableton, and more
 
 ## Installation
 
@@ -52,7 +52,7 @@ Download the latest release from the releases page and install according to your
 
 ## Usage
 
-1. Open your DAW (Logic Pro X, Pro Tools, Ableton, etc.)
+1. Open your DAW
 2. Insert Sonara as a plugin on your track
 3. Type your desired effect in plain English (e.g., "make it brighter", "add room", "more punch")
 4. The plugin will apply appropriate processing and show you what changed
@@ -75,21 +75,10 @@ Download the latest release from the releases page and install according to your
 - `AudioProcessing/Compressor`: Compressor implementation
 - `AudioProcessing/ReverbProcessor`: Reverb implementation
 
-## Documentation
-
-- **[SETUP.md](SETUP.md)** - Detailed setup and installation instructions
-- **[EXAMPLES.md](EXAMPLES.md)** - Usage examples and keyword reference
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Guidelines for contributing to the project
-- **[PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)** - Complete project structure overview
-- **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** - Technical summary and implementation details
-
 ## Development
 
 Built with JUCE 7.x and CMake. Compatible with modern C++17.
 
-## License
-
-MIT License - See [LICENSE](LICENSE) file for details
 
 ## Acknowledgments
 
