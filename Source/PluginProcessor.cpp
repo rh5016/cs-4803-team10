@@ -2,6 +2,17 @@
 #include "PluginEditor.h"
 #include <cstdlib>
 
+// Try to include config.h if it exists (gitignored, contains API key)
+// If config.h doesn't exist, GEMINI_API_KEY will be undefined
+#ifdef __has_include
+    #if __has_include("../../config.h")
+        #include "../../config.h"
+    #endif
+#else
+    // Fallback for older compilers - try to include anyway
+    #include "../../config.h"
+#endif
+
 SonaraAudioProcessor::SonaraAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
@@ -14,22 +25,24 @@ SonaraAudioProcessor::SonaraAudioProcessor()
                        )
 #endif
 {
-    // SECURITY: API key should be loaded from environment variable or secure storage
-    // For development, check if environment variable is set, otherwise use hardcoded key
-    // WARNING: Never commit API keys to version control!
-    
+
     juce::String apiKey;
     
-    // Try to get from environment variable first (more secure)
+    // Priority 1: Try environment variable first (most secure)
     const char* envKey = std::getenv("GEMINI_API_KEY");
-    
     if (envKey != nullptr && juce::String(envKey).trim().isNotEmpty()) {
         apiKey = juce::String(envKey).trim();
-    } else {
-        // Fallback to hardcoded key (for development only)
-        // TODO: Remove this before committing to public repository
-        apiKey = "AIzaSyAfQd48-sPRWVnDNPwmj1yRJH_klDpIei4";
     }
+    // Priority 2: Try config.h file (if it exists and was included)
+    #ifdef GEMINI_API_KEY
+        else if (apiKey.isEmpty()) {
+            juce::String configKey = juce::String(GEMINI_API_KEY);
+            if (configKey != "YOUR_API_KEY_HERE" && configKey.trim().isNotEmpty()) {
+                apiKey = configKey.trim();
+            }
+        }
+    #endif
+    // Priority 3: Hardcoded fallback (REMOVE BEFORE PUBLIC RELEASE!)
     
     if (apiKey.isNotEmpty()) {
         setGeminiApiKey(apiKey);

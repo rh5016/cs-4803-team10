@@ -1,0 +1,17 @@
+// API Key Configuration Template
+// 
+// INSTRUCTIONS:
+// 1. Copy this file to "config.h" (without .example)
+// 2. Replace YOUR_API_KEY_HERE with your actual Gemini API key
+// 3. The config.h file is gitignored and won't be committed
+//
+// Get your free API key from: https://aistudio.google.com/api-keys
+
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// Your Gemini API Key (get from https://aistudio.google.com/api-keys)
+#define GEMINI_API_KEY "YOUR_API_KEY_HERE"
+
+#endif // CONFIG_H
+
