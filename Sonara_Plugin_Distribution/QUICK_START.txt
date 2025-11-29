@@ -1,0 +1,24 @@
+========================================
+QUICK START GUIDE
+========================================
+
+STEP 1: Install Plugin
+----------------------
+Double-click "Install_Sonara.sh" and follow the prompts.
+
+STEP 2: Set Up API Key (for AI Features)
+--------------------------------------------------
+Open Terminal and run:
+export GEMINI_API_KEY="your-api-key-here"
+
+Get your free API key from: https://aistudio.google.com/api-keys
+
+STEP 3: Use in Your DAW
+-----------------------
+1. Open your DAW
+2. Insert Sonara on an audio track
+3. Type what you want: "make vocals bright", "add reverb", etc.
+4. Adjust the intensity slider
+
+That's it! See README.txt for full documentation.
+
