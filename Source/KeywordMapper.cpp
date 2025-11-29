@@ -87,16 +87,29 @@ bool KeywordMapper::containsKeyword(const juce::String& text, const std::vector<
 }
 
 float KeywordMapper::extractIntensity(const juce::String& text) {
+    // Check for removal/reduction keywords first
+    if (text.contains("remove") || text.contains("no ") || text.contains("without") || 
+        text.contains("take away") || text.contains("eliminate") || text.contains("cut")) {
+        return -2.0f; // Strong negative for removal
+    }
     if (text.contains("slight") || text.contains("little") || text.contains("bit")) return 0.5f;
-    if (text.contains("more") || text.contains("much")) return 1.5f;
+    if (text.contains("more") || text.contains("much") || text.contains("add")) return 1.5f;
     if (text.contains("very") || text.contains("super") || text.contains("extreme")) return 2.0f;
-    if (text.contains("less") || text.contains("reduce")) return -1.0f;
+    if (text.contains("less") || text.contains("reduce") || text.contains("lower") || text.contains("decrease")) return -1.0f;
     return 1.0f;
 }
 
 void KeywordMapper::processBrightnessKeywords(const juce::String& text, AudioParameters& params) {
-    // Check for dark/dull first (reduction)
-    if (text.contains("dull") || text.contains("dark") || text.contains("muddy")) {
+    // Check for removal first
+    if (text.contains("remove bright") || text.contains("no bright") || text.contains("without bright") ||
+        text.contains("remove highs") || text.contains("cut highs") || text.contains("take away bright")) {
+        params.eq.highShelfFreq = 8000.0f;
+        params.eq.highShelfGain = -5.0f;
+        addChange("High Shelf 8kHz -5.0dB (removed)", juce::Colour(0xff8affb4));
+    }
+    // Check for dark/dull (reduction)
+    else if (text.contains("dull") || text.contains("dark") || text.contains("muddy") ||
+             text.contains("less bright") || text.contains("reduce bright")) {
         params.eq.highShelfFreq = 8000.0f;
         params.eq.highShelfGain = -3.0f;
         addChange("High Shelf 8kHz -3.0dB", juce::Colour(0xff8affb4));
@@ -168,7 +181,20 @@ void KeywordMapper::processWarmthKeywords(const juce::String& text, AudioParamet
 }
 
 void KeywordMapper::processReverbKeywords(const juce::String& text, AudioParameters& params) {
-    if (containsKeyword(text, reverbKeywords)) {
+    // Check for removal first
+    bool removeReverb = text.contains("remove reverb") || text.contains("no reverb") || 
+                        text.contains("without reverb") || text.contains("take away reverb");
+    
+    if (removeReverb) {
+        params.reverb.enabled = false;
+        params.reverb.wetLevel = 0.0f;
+        addChange("Reverb: Disabled", juce::Colour(0xff10b981));
+        return;
+    }
+    
+    // Check if reverb keywords are present (including "add reverb")
+    if (containsKeyword(text, reverbKeywords) || text.contains("add reverb") || 
+        text.contains("with reverb") || text.contains("put reverb")) {
         params.reverb.enabled = true;
         
         if (text.contains("room") || text.contains("space") || text.contains("spacious")) {
@@ -189,6 +215,13 @@ void KeywordMapper::processReverbKeywords(const juce::String& text, AudioParamet
             params.reverb.wetLevel = 0.1f;
             params.reverb.width = 0.9f;
             addChange("Ambience: Wet 10%, Room 30%, Damping 40%", juce::Colour(0xff10b981));
+        } else {
+            // Default reverb when just "add reverb" or "reverb" is mentioned
+            params.reverb.roomSize = 0.4f;
+            params.reverb.damping = 0.3f;
+            params.reverb.wetLevel = 0.2f;
+            params.reverb.width = 0.9f;
+            addChange("Reverb: Wet 20%, Room 40%, Damping 30%", juce::Colour(0xff10b981));
         }
     }
     
@@ -245,15 +278,25 @@ void KeywordMapper::processCompressorKeywords(const juce::String& text, AudioPar
 void KeywordMapper::processBassKeywords(const juce::String& text, AudioParameters& params) {
     bool bassApplied = false;
     
-    // Check for specific bass reduction keywords first
-    if (text.contains("boom") || text.contains("boomy") || text.contains("reduce bass") || text.contains("less bass")) {
+    // Check for removal first
+    if (text.contains("remove bass") || text.contains("no bass") || text.contains("without bass") ||
+        text.contains("take away bass") || text.contains("cut bass")) {
+        params.eq.lowShelfFreq = 100.0f;
+        params.eq.lowShelfGain = -5.0f;
+        addChange("Low Shelf 100Hz -5.0dB (removed)", juce::Colour(0xff4fc3f7));
+        bassApplied = true;
+    }
+    // Check for specific bass reduction keywords
+    else if (text.contains("boom") || text.contains("boomy") || text.contains("reduce bass") || 
+             text.contains("less bass") || text.contains("lower bass")) {
         params.eq.lowShelfFreq = 150.0f;
         params.eq.lowShelfGain = -3.0f;
         addChange("Low Shelf 150Hz -3.0dB", juce::Colour(0xff4fc3f7));
         bassApplied = true;
     }
     // Check for deep bass keywords
-    else if (text.contains("deeper") || text.contains("deep bass") || text.contains("sub")) {
+    else if (text.contains("deeper") || text.contains("deep bass") || text.contains("sub") || 
+             text.contains("add bass") || text.contains("more bass")) {
         params.eq.lowShelfFreq = 60.0f;
         params.eq.lowShelfGain = 3.0f;
         addChange("Low Shelf 60Hz +3.0dB", juce::Colour(0xff4fc3f7));
@@ -334,6 +377,7 @@ void KeywordMapper::processTextWithGemini(const juce::String& text,
     
     // If Gemini is not enabled, fall back to direct processing
     if (!isGeminiEnabled()) {
+        addChange("Gemini not enabled, using direct keyword mapping", juce::Colours::orange);
         AudioParameters params = processText(textCopy, baseIntensity);
         if (callback) {
             callback(params);
@@ -341,10 +385,14 @@ void KeywordMapper::processTextWithGemini(const juce::String& text,
         return;
     }
     
+    // Log that we're using Gemini
+    addChange("Processing with Gemini LLM...", juce::Colours::yellow);
+    
     // Use Gemini to pre-process the text
     geminiClient->processTextAsync(textCopy, [this, textCopy, baseIntensity, callback](bool success, const juce::String& processedText, const juce::String& error) {
         if (success && processedText.isNotEmpty()) {
             // Process the Gemini-enhanced text through keyword mapper
+            addChange("Gemini: " + processedText, juce::Colours::lightgreen);
             AudioParameters params = processText(processedText, baseIntensity);
             if (callback) {
                 callback(params);
@@ -352,9 +400,8 @@ void KeywordMapper::processTextWithGemini(const juce::String& text,
         } else {
             // Gemini failed, fall back to direct keyword processing
             // Log the error for debugging
-            if (error.isNotEmpty()) {
-                addChange("LLM processing failed, using direct keyword mapping", juce::Colours::orange);
-            }
+            juce::String errorMsg = error.isNotEmpty() ? error : "Unknown error";
+            addChange("LLM failed: " + errorMsg + " (using direct mapping)", juce::Colours::orange);
             AudioParameters params = processText(textCopy, baseIntensity);
             if (callback) {
                 callback(params);

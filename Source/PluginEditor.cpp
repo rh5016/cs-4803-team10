@@ -108,28 +108,61 @@ void SonaraAudioProcessorEditor::textEditorReturnKeyPressed(juce::TextEditor& ed
 {
     if (&editor == &textInput)
     {
-        juce::String text = textInput.getText();
-        if (text.trim().isNotEmpty())
-        {
-            float intensity = (float)intensitySlider.getValue();
-            audioProcessor.setIntensity(intensity);
-            
-            // Use Gemini if enabled, otherwise fall back to direct processing
-            if (audioProcessor.isGeminiEnabled())
-            {
-                audioProcessor.processTextInputWithGemini(text, [this]() {
-                    // Update UI when processing completes (ensure we're on message thread)
-                    juce::MessageManager::callAsync([this]() {
-                        updateChangesDisplay();
-                    });
-                });
-            }
-            else
-            {
-                audioProcessor.processTextInput(text);
+        processTextInput();
+    }
+}
+
+void SonaraAudioProcessorEditor::textEditorTextChanged(juce::TextEditor& editor)
+{
+    // Process immediately when text changes (user-friendly)
+    if (&editor == &textInput)
+    {
+        // Process right away so user sees immediate feedback
+        processTextInput();
+    }
+}
+
+void SonaraAudioProcessorEditor::textEditorFocusLost(juce::TextEditor& editor)
+{
+    if (&editor == &textInput)
+    {
+        // Process text when user clicks away or tabs out
+        processTextInput();
+    }
+}
+
+void SonaraAudioProcessorEditor::processTextInput()
+{
+    juce::String text = textInput.getText().trim();
+    
+    // Always set intensity first
+    float intensity = (float)intensitySlider.getValue();
+    audioProcessor.setIntensity(intensity);
+    
+    if (text.isEmpty())
+    {
+        // Clear changes if text is empty
+        audioProcessor.processTextInput("");
+        updateChangesDisplay();
+        return;
+    }
+    
+    // Always try to use Gemini if enabled (should be enabled if API key is set)
+    if (audioProcessor.isGeminiEnabled())
+    {
+        // Use Gemini-enhanced processing
+        audioProcessor.processTextInputWithGemini(text, [this]() {
+            // Update UI when processing completes (ensure we're on message thread)
+            juce::MessageManager::callAsync([this]() {
                 updateChangesDisplay();
-            }
-        }
+            });
+        });
+    }
+    else
+    {
+        // Fallback to direct keyword processing
+        audioProcessor.processTextInput(text);
+        updateChangesDisplay();
     }
 }
 
@@ -169,7 +202,15 @@ void SonaraAudioProcessorEditor::updateChangesDisplay()
     
     if (changes.empty())
     {
-        changesText = "No changes yet. Enter text to apply effects!";
+        // Show helpful message with debug info
+        if (audioProcessor.isGeminiEnabled())
+        {
+            changesText = "Gemini enabled. Type text to process!\n\n(Processing happens automatically as you type)";
+        }
+        else
+        {
+            changesText = "No changes yet. Enter text to apply effects!\n\n(Gemini not enabled - using direct keyword mapping)";
+        }
     }
     else
     {

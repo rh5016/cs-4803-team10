@@ -25,3 +25,10 @@ Saved/
 .DerivedData/
 .DS_Store
 
+# API Keys and secrets
+*api_key*
+*apikey*
+*secret*
+config.ini
+.env
+

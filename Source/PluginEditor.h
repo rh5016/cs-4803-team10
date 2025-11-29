@@ -14,6 +14,8 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
     void textEditorReturnKeyPressed(juce::TextEditor& editor) override;
+    void textEditorTextChanged(juce::TextEditor& editor) override;
+    void textEditorFocusLost(juce::TextEditor& editor) override;
     void sliderValueChanged(juce::Slider* slider) override;
 
 private:
@@ -43,6 +45,7 @@ private:
     } lookAndFeel;
     
     void updateChangesDisplay();
+    void processTextInput();
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SonaraAudioProcessorEditor)
 };

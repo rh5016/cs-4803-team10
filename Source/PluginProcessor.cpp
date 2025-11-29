@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include <cstdlib>
 
 SonaraAudioProcessor::SonaraAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -13,9 +14,26 @@ SonaraAudioProcessor::SonaraAudioProcessor()
                        )
 #endif
 {
-    // Set your Gemini API key here
-    // Get your free API key from: https://aistudio.google.com/api-keys
-    setGeminiApiKey("AIzaSyAfQd48-sPRWVnDNPwmj1yRJH_klDpIei4");
+    // SECURITY: API key should be loaded from environment variable or secure storage
+    // For development, check if environment variable is set, otherwise use hardcoded key
+    // WARNING: Never commit API keys to version control!
+    
+    juce::String apiKey;
+    
+    // Try to get from environment variable first (more secure)
+    const char* envKey = std::getenv("GEMINI_API_KEY");
+    
+    if (envKey != nullptr && juce::String(envKey).trim().isNotEmpty()) {
+        apiKey = juce::String(envKey).trim();
+    } else {
+        // Fallback to hardcoded key (for development only)
+        // TODO: Remove this before committing to public repository
+        apiKey = "AIzaSyAfQd48-sPRWVnDNPwmj1yRJH_klDpIei4";
+    }
+    
+    if (apiKey.isNotEmpty()) {
+        setGeminiApiKey(apiKey);
+    }
 }
 
 SonaraAudioProcessor::~SonaraAudioProcessor()

@@ -25,6 +25,12 @@ void GeminiClient::processTextAsync(const juce::String& userInput, ResponseCallb
         return;
     }
     
+    // Ensure thread is running
+    if (!isThreadRunning())
+    {
+        startThread();
+    }
+    
     {
         const juce::ScopedLock lock(requestLock);
         currentRequest.input = userInput;
@@ -89,6 +95,13 @@ bool GeminiClient::makeGeminiRequest(const juce::String& input, juce::String& ou
 {
     lastError.clear();
     
+    // Verify API key is set
+    if (apiKey.isEmpty() || !apiKey.startsWith("AIza"))
+    {
+        lastError = "Invalid API key format";
+        return false;
+    }
+    
     // Build the API URL (without POST data in URL)
     // Using Gemini 1.5 Flash (free tier) for faster responses
     juce::String urlString = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
@@ -138,6 +151,14 @@ bool GeminiClient::makeGeminiRequest(const juce::String& input, juce::String& ou
     // Read response
     juce::String responseText = inputStream->readEntireStreamAsString();
     
+    // Check if response contains error
+    if (responseText.contains("error") || responseText.contains("Error"))
+    {
+        // Try to parse error message
+        lastError = "API Error: " + responseText.substring(0, 200); // Limit error message length
+        return false;
+    }
+    
     if (responseText.isEmpty())
     {
         lastError = "Empty response from Gemini API";
@@ -152,17 +173,21 @@ juce::String GeminiClient::buildPrompt(const juce::String& userInput)
 {
     return juce::String("You are an audio engineering assistant. Your task is to convert the user's natural language request into standardized audio engineering keywords that describe what they want.\n\n")
         + "Available keyword categories:\n"
-        + "- Brightness: bright, airy, sparkle, clarity, crisp, presence, shine, clear, detailed\n"
+        + "- Brightness: bright, airy, sparkle, clarity, crisp, presence, shine, clear, detailed, highs, treble\n"
         + "- Warmth: warm, smooth, body, full, thick, round, mellow, soft, sweet\n"
-        + "- Reverb: reverb, room, space, spacious, hall, ambience, ambient, echo, wet, atmosphere\n"
+        + "- Reverb: reverb, room, space, spacious, hall, ambience, ambient, echo, wet, atmosphere, add reverb\n"
         + "- Compression: punch, punchy, tight, glue, cohesion, consistent, control, level, even\n"
-        + "- Bass: bass, low end, lows, deep, boom, thump, kick, weight, heavy\n"
+        + "- Bass: bass, low end, lows, deep, boom, thump, kick, weight, heavy, add bass\n"
         + "- Presence: presence, forward, upfront, cut, vocal, mids, midrange, snap\n\n"
+        + "IMPORTANT - Handle removal commands:\n"
+        + "- If user says 'remove X', 'no X', 'without X', 'take away X', convert to: 'remove [keyword]'\n"
+        + "- If user says 'add X', 'more X', 'with X', convert to the positive keyword\n"
+        + "- If user says 'less X', 'reduce X', 'lower X', convert to negative version\n\n"
         + "User's request: \"" + userInput + "\"\n\n"
         + "Instructions:\n"
         + "1. Extract the audio engineering intent from the user's request\n"
         + "2. Convert it to keywords from the categories above\n"
-        + "3. Add intensity modifiers if mentioned (slight, more, very, less)\n"
+        + "3. Preserve removal/intensity modifiers (remove, add, more, less, very, etc.)\n"
         + "4. Return ONLY the processed keywords/phrases, nothing else\n"
         + "5. Keep it concise - maximum 50 words\n"
         + "6. If the request doesn't relate to audio, return \"[INVALID]\"\n\n"
