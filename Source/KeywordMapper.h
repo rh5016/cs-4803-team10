@@ -42,6 +42,13 @@ struct AudioParameters {
         bool enabled = false;
     } reverb;
     
+    // Bitcrusher Parameters
+    struct Bitcrusher {
+        int bitDepth = 16; // 1-32 bits (lower = more distortion)
+        float decimationFactor = 1.0f; // 1.0 = no decimation, higher = more aliasing
+        bool enabled = false;
+    } bitcrusher;
+    
     float intensity = 1.0f; // Global intensity multiplier
 };
 
@@ -63,6 +70,7 @@ public:
     
     // Set Gemini API key to enable LLM processing
     // Get your free API key from: https://aistudio.google.com/api-keys
+    // Note: Client is created lazily when actually needed, not during plugin instantiation
     void setGeminiApiKey(const juce::String& apiKey);
     
     // Check if Gemini is enabled
@@ -74,10 +82,15 @@ public:
     // Reset all parameters
     void reset();
     
+    // Helper to add change log (public so processor can add changes when restoring state)
+    void addChange(const juce::String& description, const juce::Colour& color = juce::Colours::white);
+    
 private:
+    // Store API key separately so we can create client lazily
+    juce::String storedApiKey;
     std::vector<ChangeLog> recentChanges;
     
-    // Gemini client for LLM processing (optional)
+    // Gemini client for LLM processing (optional) - created lazily when needed
     std::unique_ptr<GeminiClient> geminiClient;
     
     // Keyword detection functions
@@ -91,6 +104,7 @@ private:
     void processCompressorKeywords(const juce::String& text, AudioParameters& params);
     void processBassKeywords(const juce::String& text, AudioParameters& params);
     void processPresenceKeywords(const juce::String& text, AudioParameters& params);
+    void processBitcrusherKeywords(const juce::String& text, AudioParameters& params);
     
     // Keyword lists
     std::vector<juce::String> brightnessKeywords;
@@ -99,8 +113,5 @@ private:
     std::vector<juce::String> compressorKeywords;
     std::vector<juce::String> bassKeywords;
     std::vector<juce::String> presenceKeywords;
-    
-    // Helper to add change log
-    void addChange(const juce::String& description, const juce::Colour& color = juce::Colours::white);
 };
 

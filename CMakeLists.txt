@@ -28,6 +28,8 @@ target_sources(Sonara PRIVATE
     Source/AudioProcessing/Compressor.cpp
     Source/AudioProcessing/ReverbProcessor.h
     Source/AudioProcessing/ReverbProcessor.cpp
+    Source/AudioProcessing/Bitcrusher.h
+    Source/AudioProcessing/Bitcrusher.cpp
     Source/KeywordMapper.h
     Source/KeywordMapper.cpp
     Source/ChangesLogger.h

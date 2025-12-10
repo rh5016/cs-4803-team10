@@ -3,7 +3,8 @@
 
 GeminiClient::GeminiClient() : Thread("GeminiAPIThread")
 {
-    startThread();
+    // Don't start thread in constructor - start it lazily when actually needed
+    // This prevents blocking Logic Pro during plugin instantiation
 }
 
 GeminiClient::~GeminiClient()
@@ -25,10 +26,12 @@ void GeminiClient::processTextAsync(const juce::String& userInput, ResponseCallb
         return;
     }
     
-    // Ensure thread is running
+    // Start thread lazily only when actually needed (not during plugin instantiation)
     if (!isThreadRunning())
     {
         startThread();
+        // Give thread a moment to start
+        juce::Thread::sleep(10);
     }
     
     {
@@ -178,7 +181,9 @@ juce::String GeminiClient::buildPrompt(const juce::String& userInput)
         + "- Reverb: reverb, room, space, spacious, hall, ambience, ambient, echo, wet, atmosphere, add reverb\n"
         + "- Compression: punch, punchy, tight, glue, cohesion, consistent, control, level, even\n"
         + "- Bass: bass, low end, lows, deep, boom, thump, kick, weight, heavy, add bass\n"
-        + "- Presence: presence, forward, upfront, cut, vocal, mids, midrange, snap\n\n"
+        + "- Presence: presence, forward, upfront, cut, vocal, mids, midrange, snap\n"
+        + "- Bitcrusher/Digital Distortion: bitcrush, lo-fi, lofi, old video game, 8-bit, retro, digital distortion, fuzz, crunchy, glitch\n"
+        + "  Examples: 'make it sound like an old video game' (moderate bit depth), 'give me lo-fi fuzz' (high bit reduction)\n\n"
         + "IMPORTANT - Handle removal commands:\n"
         + "- If user says 'remove X', 'no X', 'without X', 'take away X', convert to: 'remove [keyword]'\n"
         + "- If user says 'add X', 'more X', 'with X', convert to the positive keyword\n"

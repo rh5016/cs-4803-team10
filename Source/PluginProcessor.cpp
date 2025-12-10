@@ -44,9 +44,10 @@ SonaraAudioProcessor::SonaraAudioProcessor()
     #endif
     // Priority 3: Hardcoded fallback (REMOVE BEFORE PUBLIC RELEASE!)
     
-    if (apiKey.isNotEmpty()) {
-        setGeminiApiKey(apiKey);
-    }
+    // Don't initialize Gemini client in constructor - do it lazily when needed
+    // This prevents blocking Logic Pro during plugin instantiation
+    // The API key will be set when the plugin editor is created (if needed)
+    // Setting API key here could cause blocking, so we skip it entirely in constructor
 }
 
 SonaraAudioProcessor::~SonaraAudioProcessor()
@@ -120,11 +121,13 @@ void SonaraAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     equalizer.setSampleRate(sampleRate);
     compressor.setSampleRate(sampleRate);
     reverbProcessor.setSampleRate(sampleRate);
+    bitcrusher.setSampleRate(sampleRate);
     
     // Reset processors
     equalizer.reset();
     compressor.reset();
     reverbProcessor.reset();
+    bitcrusher.reset();
 }
 
 void SonaraAudioProcessor::releaseResources()
@@ -167,6 +170,7 @@ void SonaraAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     equalizer.processBlock(buffer);
     compressor.processBlock(buffer);
     reverbProcessor.processBlock(buffer);
+    bitcrusher.processBlock(buffer);
 }
 
 bool SonaraAudioProcessor::hasEditor() const
@@ -181,14 +185,17 @@ juce::AudioProcessorEditor* SonaraAudioProcessor::createEditor()
 
 void SonaraAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
-    // Save state
-    juce::ignoreUnused(destData);
+    // Return empty state - plugin doesn't persist state
+    // This prevents Logic Pro from hanging when saving/loading projects
+    destData.setSize(0);
 }
 
 void SonaraAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
-    // Restore state
+    // Accept any state but don't process it - plugin doesn't persist state
+    // This prevents Logic Pro from hanging when loading projects
     juce::ignoreUnused(data, sizeInBytes);
+    // Return immediately - don't block Logic Pro
 }
 
 void SonaraAudioProcessor::processTextInput(const juce::String& text)
@@ -221,6 +228,11 @@ void SonaraAudioProcessor::processTextInput(const juce::String& text)
     reverbProcessor.setWetLevel(params.reverb.wetLevel);
     reverbProcessor.setDryLevel(params.reverb.dryLevel);
     reverbProcessor.setEnabled(params.reverb.enabled);
+    
+    // Apply bitcrusher settings
+    bitcrusher.setBitDepth(params.bitcrusher.bitDepth);
+    bitcrusher.setDecimationFactor(params.bitcrusher.decimationFactor);
+    bitcrusher.setEnabled(params.bitcrusher.enabled);
 }
 
 void SonaraAudioProcessor::setIntensity(float intensity)
@@ -272,6 +284,11 @@ void SonaraAudioProcessor::processTextInputWithGemini(const juce::String& text, 
         reverbProcessor.setWetLevel(params.reverb.wetLevel);
         reverbProcessor.setDryLevel(params.reverb.dryLevel);
         reverbProcessor.setEnabled(params.reverb.enabled);
+        
+        // Apply bitcrusher settings
+        bitcrusher.setBitDepth(params.bitcrusher.bitDepth);
+        bitcrusher.setDecimationFactor(params.bitcrusher.decimationFactor);
+        bitcrusher.setEnabled(params.bitcrusher.enabled);
         
         // Call completion callback if provided
         if (onComplete) {

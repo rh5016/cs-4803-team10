@@ -2,8 +2,9 @@
 #include "GeminiClient.h"
 
 KeywordMapper::KeywordMapper() {
-    // Gemini client will be created when API key is set
+    // Gemini client will be created lazily when actually needed (not during plugin instantiation)
     geminiClient = nullptr;
+    storedApiKey = "";
     
     // Initialize keyword lists
     brightnessKeywords = {
@@ -59,6 +60,7 @@ AudioParameters KeywordMapper::processText(const juce::String& text, float baseI
     processCompressorKeywords(lowerText, params);
     processBassKeywords(lowerText, params);
     processPresenceKeywords(lowerText, params);
+    processBitcrusherKeywords(lowerText, params);
     
     // Apply intensity to all parameters (only if intensity is positive)
     // For negative values (like reductions), we still want them to work
@@ -342,6 +344,59 @@ void KeywordMapper::processPresenceKeywords(const juce::String& text, AudioParam
     }
 }
 
+void KeywordMapper::processBitcrusherKeywords(const juce::String& text, AudioParameters& params) {
+    juce::String lower = text.toLowerCase();
+    
+    // Check for bitcrusher/lo-fi keywords
+    bool bitcrush = lower.contains("bitcrush") || lower.contains("bit crush") ||
+                    lower.contains("lo-fi") || lower.contains("lofi") || lower.contains("lo fi") ||
+                    lower.contains("old video game") || lower.contains("video game") ||
+                    lower.contains("8-bit") || lower.contains("8bit") || lower.contains("8 bit") ||
+                    lower.contains("retro") || lower.contains("vintage") ||
+                    lower.contains("digital distortion") || lower.contains("fuzz") ||
+                    lower.contains("crunchy") || lower.contains("glitch");
+    
+    if (bitcrush) {
+        params.bitcrusher.enabled = true;
+        
+        // "Make it sound like an old video game" - moderate bit depth and decimation
+        if (lower.contains("old video game") || lower.contains("video game") || lower.contains("8-bit") || 
+            lower.contains("8bit") || lower.contains("8 bit") || lower.contains("retro")) {
+            params.bitcrusher.bitDepth = 8;
+            params.bitcrusher.decimationFactor = 2.0f;
+            addChange("Bitcrusher: 8-bit", juce::Colour(0xffff6b35));
+        }
+        // "Give me lo-fi fuzz" - high bit reduction
+        else if (lower.contains("lo-fi") || lower.contains("lofi") || lower.contains("lo fi") || 
+                 lower.contains("fuzz") || lower.contains("crunchy")) {
+            params.bitcrusher.bitDepth = 4;
+            params.bitcrusher.decimationFactor = 3.0f;
+            addChange("Bitcrusher: 4-bit", juce::Colour(0xffff6b35));
+        }
+        // Extreme glitch
+        else if (lower.contains("glitch") || lower.contains("extreme")) {
+            params.bitcrusher.bitDepth = 2;
+            params.bitcrusher.decimationFactor = 4.0f;
+            addChange("Bitcrusher: 2-bit", juce::Colour(0xffff6b35));
+        }
+        // Default moderate bitcrush
+        else {
+            params.bitcrusher.bitDepth = 6;
+            params.bitcrusher.decimationFactor = 2.0f;
+            addChange("Bitcrusher: 6-bit", juce::Colour(0xffff6b35));
+        }
+        
+        // Apply intensity multiplier
+        if (lower.contains("more") || lower.contains("heavy") || lower.contains("extreme")) {
+            params.bitcrusher.bitDepth = juce::jmax(1, params.bitcrusher.bitDepth - 2);
+            params.bitcrusher.decimationFactor *= 1.5f;
+        } else if (lower.contains("less") || lower.contains("light") || lower.contains("subtle")) {
+            params.bitcrusher.bitDepth = juce::jmin(16, params.bitcrusher.bitDepth + 4);
+            params.bitcrusher.decimationFactor *= 0.7f;
+        }
+    }
+}
+
 void KeywordMapper::addChange(const juce::String& description, const juce::Colour& color) {
     recentChanges.push_back({description, color});
 }
@@ -355,18 +410,18 @@ KeywordMapper::~KeywordMapper() {
 }
 
 void KeywordMapper::setGeminiApiKey(const juce::String& apiKey) {
-    if (apiKey.trim().isNotEmpty()) {
-        if (!geminiClient) {
-            geminiClient = std::make_unique<GeminiClient>();
-        }
-        geminiClient->setApiKey(apiKey);
-    } else {
+    // Just store the API key - don't create client during plugin initialization
+    // Client will be created lazily in processTextWithGemini when actually needed
+    // This prevents blocking Logic Pro during project load
+    storedApiKey = apiKey.trim();
+    if (storedApiKey.isEmpty()) {
         geminiClient = nullptr;
     }
 }
 
 bool KeywordMapper::isGeminiEnabled() const {
-    return geminiClient != nullptr && geminiClient->isApiKeySet();
+    // Check if we have an API key stored (client may not be created yet)
+    return storedApiKey.isNotEmpty();
 }
 
 void KeywordMapper::processTextWithGemini(const juce::String& text, 
@@ -375,8 +430,26 @@ void KeywordMapper::processTextWithGemini(const juce::String& text,
     // Capture text by value for the lambda
     juce::String textCopy = text;
     
-    // If Gemini is not enabled, fall back to direct processing
-    if (!isGeminiEnabled()) {
+    // If no API key stored, fall back to direct processing
+    if (storedApiKey.isEmpty()) {
+        addChange("Gemini not enabled, using direct keyword mapping", juce::Colours::orange);
+        AudioParameters params = processText(textCopy, baseIntensity);
+        if (callback) {
+            callback(params);
+        }
+        return;
+    }
+    
+    // Create Gemini client lazily only when actually needed (not during plugin instantiation)
+    if (!geminiClient) {
+        geminiClient = std::make_unique<GeminiClient>();
+        if (geminiClient) {
+            geminiClient->setApiKey(storedApiKey);
+        }
+    }
+    
+    // If client creation failed, fall back to direct processing
+    if (!geminiClient || !geminiClient->isApiKeySet()) {
         addChange("Gemini not enabled, using direct keyword mapping", juce::Colours::orange);
         AudioParameters params = processText(textCopy, baseIntensity);
         if (callback) {

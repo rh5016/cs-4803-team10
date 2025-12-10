@@ -1,10 +1,40 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include <cstdlib>
+
+// Try to include config.h if it exists (gitignored, contains API key)
+#ifdef __has_include
+    #if __has_include("../../config.h")
+        #include "../../config.h"
+    #endif
+#else
+    // Fallback for older compilers - try to include anyway
+    #include "../../config.h"
+#endif
 
 SonaraAudioProcessorEditor::SonaraAudioProcessorEditor(SonaraAudioProcessor& p)
     : AudioProcessorEditor(&p), audioProcessor(p)
 {
     setLookAndFeel(&lookAndFeel);
+    
+    // Initialize Gemini API key when editor is created (not during plugin instantiation)
+    // This prevents blocking Logic Pro during project load
+    juce::String apiKey;
+    const char* envKey = std::getenv("GEMINI_API_KEY");
+    if (envKey != nullptr && juce::String(envKey).trim().isNotEmpty()) {
+        apiKey = juce::String(envKey).trim();
+    }
+    #ifdef GEMINI_API_KEY
+        else if (apiKey.isEmpty()) {
+            juce::String configKey = juce::String(GEMINI_API_KEY);
+            if (configKey != "YOUR_API_KEY_HERE" && configKey.trim().isNotEmpty()) {
+                apiKey = configKey.trim();
+            }
+        }
+    #endif
+    if (apiKey.isNotEmpty()) {
+        audioProcessor.setGeminiApiKey(apiKey);
+    }
     
     // Setup title
     titleLabel.setText("SONARA", juce::dontSendNotification);
