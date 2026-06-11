@@ -4,6 +4,7 @@
 #include "AudioProcessing/Equalizer.h"
 #include "AudioProcessing/Compressor.h"
 #include "AudioProcessing/ReverbProcessor.h"
+#include "AudioProcessing/DelayProcessor.h"
 #include "KeywordMapper.h"
 #include "ChangesLogger.h"
 #include <functional>
@@ -56,6 +57,7 @@ private:
     Equalizer equalizer;
     Compressor compressor;
     ReverbProcessor reverbProcessor;
+    DelayProcessor delayProcessor;
     KeywordMapper keywordMapper;
     
     double currentSampleRate = 44100.0;

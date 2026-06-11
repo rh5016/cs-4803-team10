@@ -21,6 +21,11 @@ KeywordMapper::KeywordMapper() {
         "reverb", "verb", "room", "space", "spacious", "hall", "ambience", "ambient",
         "distance", "distant", "echo", "echoes", "wet", "wetness", "atmosphere", "atmospheric"
     };
+
+    delayKeywords = {
+        "delay", "delayed", "echo", "echoes", "repeat", "repeats", "slapback", "slap back",
+        "quarter delay", "quarter note delay", "1/4 delay", "1/4 note delay"
+    };
     
     compressorKeywords = {
         "punch", "punchy", "tight", "tighter", "glue", "glued", "glue the mix", "cohesion",
@@ -56,6 +61,7 @@ AudioParameters KeywordMapper::processText(const juce::String& text, float baseI
     processBrightnessKeywords(lowerText, params);
     processWarmthKeywords(lowerText, params);
     processReverbKeywords(lowerText, params);
+    processDelayKeywords(lowerText, params);
     processCompressorKeywords(lowerText, params);
     processBassKeywords(lowerText, params);
     processPresenceKeywords(lowerText, params);
@@ -68,6 +74,8 @@ AudioParameters KeywordMapper::processText(const juce::String& text, float baseI
         params.eq.lowShelfGain *= intensity;
         params.reverb.wetLevel *= intensity;
         params.reverb.roomSize *= intensity;
+        params.delay.mix *= intensity;
+        params.delay.feedback *= intensity;
         
         // Compressor ratio shouldn't go below 1.0
         float newRatio = params.compressor.ratio * intensity;
@@ -230,6 +238,40 @@ void KeywordMapper::processReverbKeywords(const juce::String& text, AudioParamet
         params.reverb.wetLevel = 0.05f;
         params.reverb.dryLevel = 0.95f;
         addChange("Dry Mix: Wet 5%", juce::Colour(0xff10b981));
+    }
+}
+
+void KeywordMapper::processDelayKeywords(const juce::String& text, AudioParameters& params) {
+    bool removeDelay = text.contains("remove delay") || text.contains("no delay") ||
+                       text.contains("without delay") || text.contains("take away delay") ||
+                       text.contains("remove echo");
+
+    if (removeDelay) {
+        params.delay.enabled = false;
+        params.delay.mix = 0.0f;
+        addChange("Delay: Disabled", juce::Colour(0xfff59e0b));
+        return;
+    }
+
+    if (containsKeyword(text, delayKeywords) || text.contains("add delay") || text.contains("with delay") || text.contains("put delay")) {
+        params.delay.enabled = true;
+
+        if (text.contains("slapback") || text.contains("slap back")) {
+            params.delay.delayTimeMs = 120.0f;
+            params.delay.feedback = 0.15f;
+            params.delay.mix = 0.20f;
+            addChange("Slapback Delay: 120ms, Feedback 15%, Mix 20%", juce::Colour(0xfff59e0b));
+        } else if (text.contains("quarter") || text.contains("1/4")) {
+            params.delay.delayTimeMs = 500.0f;
+            params.delay.feedback = 0.35f;
+            params.delay.mix = 0.25f;
+            addChange("Quarter Delay: 500ms, Feedback 35%, Mix 25%", juce::Colour(0xfff59e0b));
+        } else {
+            params.delay.delayTimeMs = 350.0f;
+            params.delay.feedback = 0.30f;
+            params.delay.mix = 0.20f;
+            addChange("Delay: 350ms, Feedback 30%, Mix 20%", juce::Colour(0xfff59e0b));
+        }
     }
 }
 

@@ -7,7 +7,7 @@ Intelligent audio engineering plugin that transforms your sound based on text in
 - **Text-based audio processing**: Describe your desired sound in plain English
 - **Intelligent keyword mapping**: Understands creative language and applies appropriate processing
 - **Real-time feedback**: See exactly what changes were made to your audio
-- **Professional audio processing**: Built-in EQ, compression, and reverb
+- **Professional audio processing**: Built-in EQ, compression, reverb, and delay
 - **DAW compatible**: Works with Logic Pro X, Ableton, and more
 
 ## Installation
@@ -63,6 +63,7 @@ Download the latest release from the releases page and install according to your
 - **Brightness**: "brighter", "more air", "sparkle", "crisp"
 - **Warmth**: "warmer", "smoother", "more body"
 - **Reverb**: "add room", "more space", "hall", "ambience"
+- **Delay**: "add delay", "quarter delay", "slapback", "echo"
 - **Compression**: "more punch", "tighter", "glue the mix"
 - **Bass**: "more low end", "deeper bass"
 
@@ -74,6 +75,7 @@ Download the latest release from the releases page and install according to your
 - `AudioProcessing/Equalizer`: Parametric EQ implementation
 - `AudioProcessing/Compressor`: Compressor implementation
 - `AudioProcessing/ReverbProcessor`: Reverb implementation
+- `AudioProcessing/DelayProcessor`: Delay implementation
 
 ## Development
 

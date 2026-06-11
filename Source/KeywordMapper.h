@@ -41,6 +41,13 @@ struct AudioParameters {
         float dryLevel = 1.0f;
         bool enabled = false;
     } reverb;
+
+    struct Delay {
+        float delayTimeMs = 500.0f;
+        float feedback = 0.35f;
+        float mix = 0.25f;
+        bool enabled = false;
+    } delay;
     
     float intensity = 1.0f; // Global intensity multiplier
 };
@@ -88,6 +95,7 @@ private:
     void processBrightnessKeywords(const juce::String& text, AudioParameters& params);
     void processWarmthKeywords(const juce::String& text, AudioParameters& params);
     void processReverbKeywords(const juce::String& text, AudioParameters& params);
+    void processDelayKeywords(const juce::String& text, AudioParameters& params);
     void processCompressorKeywords(const juce::String& text, AudioParameters& params);
     void processBassKeywords(const juce::String& text, AudioParameters& params);
     void processPresenceKeywords(const juce::String& text, AudioParameters& params);
@@ -96,6 +104,7 @@ private:
     std::vector<juce::String> brightnessKeywords;
     std::vector<juce::String> warmthKeywords;
     std::vector<juce::String> reverbKeywords;
+    std::vector<juce::String> delayKeywords;
     std::vector<juce::String> compressorKeywords;
     std::vector<juce::String> bassKeywords;
     std::vector<juce::String> presenceKeywords;

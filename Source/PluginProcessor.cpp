@@ -120,11 +120,13 @@ void SonaraAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     equalizer.setSampleRate(sampleRate);
     compressor.setSampleRate(sampleRate);
     reverbProcessor.setSampleRate(sampleRate);
+    delayProcessor.setSampleRate(sampleRate);
     
     // Reset processors
     equalizer.reset();
     compressor.reset();
     reverbProcessor.reset();
+    delayProcessor.reset();
 }
 
 void SonaraAudioProcessor::releaseResources()
@@ -167,6 +169,7 @@ void SonaraAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     equalizer.processBlock(buffer);
     compressor.processBlock(buffer);
     reverbProcessor.processBlock(buffer);
+    delayProcessor.processBlock(buffer);
 }
 
 bool SonaraAudioProcessor::hasEditor() const
@@ -221,6 +224,12 @@ void SonaraAudioProcessor::processTextInput(const juce::String& text)
     reverbProcessor.setWetLevel(params.reverb.wetLevel);
     reverbProcessor.setDryLevel(params.reverb.dryLevel);
     reverbProcessor.setEnabled(params.reverb.enabled);
+
+    // Apply delay settings
+    delayProcessor.setDelayTimeMs(params.delay.delayTimeMs);
+    delayProcessor.setFeedback(params.delay.feedback);
+    delayProcessor.setMix(params.delay.mix);
+    delayProcessor.setEnabled(params.delay.enabled);
 }
 
 void SonaraAudioProcessor::setIntensity(float intensity)
@@ -272,6 +281,12 @@ void SonaraAudioProcessor::processTextInputWithGemini(const juce::String& text, 
         reverbProcessor.setWetLevel(params.reverb.wetLevel);
         reverbProcessor.setDryLevel(params.reverb.dryLevel);
         reverbProcessor.setEnabled(params.reverb.enabled);
+
+        // Apply delay settings
+        delayProcessor.setDelayTimeMs(params.delay.delayTimeMs);
+        delayProcessor.setFeedback(params.delay.feedback);
+        delayProcessor.setMix(params.delay.mix);
+        delayProcessor.setEnabled(params.delay.enabled);
         
         // Call completion callback if provided
         if (onComplete) {
