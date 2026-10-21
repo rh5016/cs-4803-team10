@@ -53,6 +53,26 @@ SonaraAudioProcessorEditor::SonaraAudioProcessorEditor(SonaraAudioProcessor& p)
             audioProcessor.setBitcrusherBitDepth(selectedBitDepth);
     };
     addAndMakeVisible(bitDepthSelector);
+
+    pitchToggle.setButtonText("Transpose");
+    pitchToggle.setColour(juce::ToggleButton::textColourId, juce::Colour(0xffcbd5e1));
+    pitchToggle.onClick = [this]() {
+        audioProcessor.setPitchShifterEnabled(pitchToggle.getToggleState());
+    };
+    addAndMakeVisible(pitchToggle);
+
+    pitchLabel.setText("Semitones", juce::dontSendNotification);
+    pitchLabel.setFont(juce::Font(14.0f));
+    pitchLabel.setColour(juce::Label::textColourId, juce::Colour(0xffcbd5e1));
+    addAndMakeVisible(pitchLabel);
+
+    pitchSlider.setRange(-12.0, 12.0, 1.0);
+    pitchSlider.setValue(audioProcessor.getPitchSemitones());
+    pitchSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    pitchSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 48, 24);
+    pitchSlider.setTextValueSuffix(" st");
+    pitchSlider.addListener(this);
+    addAndMakeVisible(pitchSlider);
     
     // Setup changes display
     changesTitleLabel.setText("Changes Applied:", juce::dontSendNotification);
@@ -124,6 +144,13 @@ void SonaraAudioProcessorEditor::resized()
     bitcrusherToggle.setBounds(bitcrusherArea.removeFromLeft(150));
     bitDepthLabel.setBounds(bitcrusherArea.removeFromLeft(75));
     bitDepthSelector.setBounds(bitcrusherArea.removeFromLeft(100));
+
+    area.removeFromTop(10);
+
+    auto pitchArea = area.removeFromTop(36);
+    pitchToggle.setBounds(pitchArea.removeFromLeft(105));
+    pitchLabel.setBounds(pitchArea.removeFromLeft(78));
+    pitchSlider.setBounds(pitchArea);
 
     area.removeFromTop(18);
     
@@ -197,7 +224,11 @@ void SonaraAudioProcessorEditor::processTextInput()
 
 void SonaraAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
 {
-    if (slider == &intensitySlider)
+    if (slider == &pitchSlider)
+    {
+        audioProcessor.setPitchSemitones(static_cast<float>(pitchSlider.getValue()));
+    }
+    else if (slider == &intensitySlider)
     {
         juce::String currentText = textInput.getText();
         if (currentText.trim().isNotEmpty())

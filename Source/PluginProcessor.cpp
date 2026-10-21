@@ -120,6 +120,7 @@ void SonaraAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     equalizer.setSampleRate(sampleRate);
     compressor.setSampleRate(sampleRate);
     reverbProcessor.setSampleRate(sampleRate);
+    pitchShifter.prepare(sampleRate, getTotalNumOutputChannels());
     
     // Reset processors
     equalizer.reset();
@@ -168,6 +169,7 @@ void SonaraAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     compressor.processBlock(buffer);
     reverbProcessor.processBlock(buffer);
     bitcrusher.processBlock(buffer);
+    pitchShifter.processBlock(buffer);
 }
 
 bool SonaraAudioProcessor::hasEditor() const
@@ -242,6 +244,21 @@ void SonaraAudioProcessor::setBitcrusherBitDepth(int bitDepth)
 int SonaraAudioProcessor::getBitcrusherBitDepth() const
 {
     return bitcrusher.getBitDepth();
+}
+
+void SonaraAudioProcessor::setPitchShifterEnabled(bool enabled)
+{
+    pitchShifter.setEnabled(enabled);
+}
+
+void SonaraAudioProcessor::setPitchSemitones(float semitones)
+{
+    pitchShifter.setSemitones(semitones);
+}
+
+float SonaraAudioProcessor::getPitchSemitones() const
+{
+    return pitchShifter.getSemitones();
 }
 
 std::vector<ChangeLog> SonaraAudioProcessor::getChangeLog() const

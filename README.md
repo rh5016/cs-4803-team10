@@ -7,7 +7,7 @@ Intelligent audio engineering plugin that transforms your sound based on text in
 - **Text-based audio processing**: Describe your desired sound in plain English
 - **Intelligent keyword mapping**: Understands creative language and applies appropriate processing
 - **Real-time feedback**: See exactly what changes were made to your audio
-- **Professional audio processing**: Built-in EQ, compression, reverb, and a selectable 1–16-bit bitcrusher
+- **Professional audio processing**: Built-in EQ, compression, reverb, selectable 1–16-bit bitcrusher, and pitch transposition
 - **DAW compatible**: Works with Logic Pro X, Ableton, and more
 
 ## Installation
@@ -58,6 +58,7 @@ Download the latest release from the releases page and install according to your
 4. The plugin will apply appropriate processing and show you what changed
 5. Adjust the intensity slider to control the effect strength
 6. Enable Bitcrusher and select a bit depth to add digital lo-fi distortion
+7. Enable Transpose and adjust the semitone slider to shift pitch by up to one octave
 
 ### Example Keywords
 
@@ -75,6 +76,7 @@ Download the latest release from the releases page and install according to your
 - `AudioProcessing/Equalizer`: Parametric EQ implementation
 - `AudioProcessing/Compressor`: Compressor implementation
 - `AudioProcessing/Bitcrusher`: Selectable bit-depth quantization effect
+- `AudioProcessing/PitchShifter`: Real-time pitch transposition effect
 - `AudioProcessing/ReverbProcessor`: Reverb implementation
 
 ## Development
