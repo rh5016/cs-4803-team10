@@ -29,6 +29,9 @@ private:
     juce::ToggleButton bitcrusherToggle;
     juce::Label bitDepthLabel;
     juce::ComboBox bitDepthSelector;
+    juce::ToggleButton pitchToggle;
+    juce::Label pitchLabel;
+    juce::Slider pitchSlider;
     juce::Label changesTitleLabel;
     juce::TextEditor changesDisplay;
     

@@ -4,6 +4,7 @@
 #include "AudioProcessing/Equalizer.h"
 #include "AudioProcessing/Compressor.h"
 #include "AudioProcessing/Bitcrusher.h"
+#include "AudioProcessing/PitchShifter.h"
 #include "AudioProcessing/ReverbProcessor.h"
 #include "KeywordMapper.h"
 #include "ChangesLogger.h"
@@ -49,6 +50,9 @@ public:
     void setBitcrusherEnabled(bool enabled);
     void setBitcrusherBitDepth(int bitDepth);
     int getBitcrusherBitDepth() const;
+    void setPitchShifterEnabled(bool enabled);
+    void setPitchSemitones(float semitones);
+    float getPitchSemitones() const;
     std::vector<ChangeLog> getChangeLog() const;
     
     // Gemini LLM integration
@@ -60,6 +64,7 @@ private:
     Equalizer equalizer;
     Compressor compressor;
     Bitcrusher bitcrusher;
+    PitchShifter pitchShifter;
     ReverbProcessor reverbProcessor;
     KeywordMapper keywordMapper;
     
