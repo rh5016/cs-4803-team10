@@ -26,6 +26,8 @@ target_sources(Sonara PRIVATE
     Source/AudioProcessing/Equalizer.cpp
     Source/AudioProcessing/Compressor.h
     Source/AudioProcessing/Compressor.cpp
+    Source/AudioProcessing/Bitcrusher.h
+    Source/AudioProcessing/Bitcrusher.cpp
     Source/AudioProcessing/ReverbProcessor.h
     Source/AudioProcessing/ReverbProcessor.cpp
     Source/KeywordMapper.h

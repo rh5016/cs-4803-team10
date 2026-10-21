@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "AudioProcessing/Equalizer.h"
 #include "AudioProcessing/Compressor.h"
+#include "AudioProcessing/Bitcrusher.h"
 #include "AudioProcessing/ReverbProcessor.h"
 #include "KeywordMapper.h"
 #include "ChangesLogger.h"
@@ -45,6 +46,9 @@ public:
     // Custom parameters
     void processTextInput(const juce::String& text);
     void setIntensity(float intensity);
+    void setBitcrusherEnabled(bool enabled);
+    void setBitcrusherBitDepth(int bitDepth);
+    int getBitcrusherBitDepth() const;
     std::vector<ChangeLog> getChangeLog() const;
     
     // Gemini LLM integration
@@ -55,6 +59,7 @@ public:
 private:
     Equalizer equalizer;
     Compressor compressor;
+    Bitcrusher bitcrusher;
     ReverbProcessor reverbProcessor;
     KeywordMapper keywordMapper;
     

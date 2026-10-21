@@ -31,6 +31,28 @@ SonaraAudioProcessorEditor::SonaraAudioProcessorEditor(SonaraAudioProcessor& p)
     intensityLabel.setFont(juce::Font(14.0f));
     intensityLabel.setColour(juce::Label::textColourId, juce::Colour(0xffcbd5e1));
     addAndMakeVisible(intensityLabel);
+
+    bitcrusherToggle.setButtonText("Bitcrusher");
+    bitcrusherToggle.setColour(juce::ToggleButton::textColourId, juce::Colour(0xffcbd5e1));
+    bitcrusherToggle.onClick = [this]() {
+        audioProcessor.setBitcrusherEnabled(bitcrusherToggle.getToggleState());
+    };
+    addAndMakeVisible(bitcrusherToggle);
+
+    bitDepthLabel.setText("Bit depth", juce::dontSendNotification);
+    bitDepthLabel.setFont(juce::Font(14.0f));
+    bitDepthLabel.setColour(juce::Label::textColourId, juce::Colour(0xffcbd5e1));
+    addAndMakeVisible(bitDepthLabel);
+
+    for (int bits = 1; bits <= 16; ++bits)
+        bitDepthSelector.addItem(juce::String(bits) + " bit", bits);
+    bitDepthSelector.setSelectedId(audioProcessor.getBitcrusherBitDepth(), juce::dontSendNotification);
+    bitDepthSelector.onChange = [this]() {
+        const int selectedBitDepth = bitDepthSelector.getSelectedId();
+        if (selectedBitDepth > 0)
+            audioProcessor.setBitcrusherBitDepth(selectedBitDepth);
+    };
+    addAndMakeVisible(bitDepthSelector);
     
     // Setup changes display
     changesTitleLabel.setText("Changes Applied:", juce::dontSendNotification);
@@ -96,7 +118,14 @@ void SonaraAudioProcessorEditor::resized()
     intensityLabel.setBounds(sliderArea.removeFromLeft(80));
     intensitySlider.setBounds(sliderArea);
     
-    area.removeFromTop(30);
+    area.removeFromTop(12);
+
+    auto bitcrusherArea = area.removeFromTop(32);
+    bitcrusherToggle.setBounds(bitcrusherArea.removeFromLeft(150));
+    bitDepthLabel.setBounds(bitcrusherArea.removeFromLeft(75));
+    bitDepthSelector.setBounds(bitcrusherArea.removeFromLeft(100));
+
+    area.removeFromTop(18);
     
     changesTitleLabel.setBounds(area.removeFromTop(30));
     area.removeFromTop(10);

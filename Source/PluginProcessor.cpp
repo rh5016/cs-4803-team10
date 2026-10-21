@@ -167,6 +167,7 @@ void SonaraAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     equalizer.processBlock(buffer);
     compressor.processBlock(buffer);
     reverbProcessor.processBlock(buffer);
+    bitcrusher.processBlock(buffer);
 }
 
 bool SonaraAudioProcessor::hasEditor() const
@@ -226,6 +227,21 @@ void SonaraAudioProcessor::processTextInput(const juce::String& text)
 void SonaraAudioProcessor::setIntensity(float intensity)
 {
     currentIntensity = intensity;
+}
+
+void SonaraAudioProcessor::setBitcrusherEnabled(bool enabled)
+{
+    bitcrusher.setEnabled(enabled);
+}
+
+void SonaraAudioProcessor::setBitcrusherBitDepth(int bitDepth)
+{
+    bitcrusher.setBitDepth(bitDepth);
+}
+
+int SonaraAudioProcessor::getBitcrusherBitDepth() const
+{
+    return bitcrusher.getBitDepth();
 }
 
 std::vector<ChangeLog> SonaraAudioProcessor::getChangeLog() const

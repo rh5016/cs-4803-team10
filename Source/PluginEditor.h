@@ -26,6 +26,9 @@ private:
     juce::TextEditor textInput;
     juce::Slider intensitySlider;
     juce::Label intensityLabel;
+    juce::ToggleButton bitcrusherToggle;
+    juce::Label bitDepthLabel;
+    juce::ComboBox bitDepthSelector;
     juce::Label changesTitleLabel;
     juce::TextEditor changesDisplay;
     
